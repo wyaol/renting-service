@@ -5,6 +5,8 @@ import com.example.rentingservice.controller.request.OrderCreateRequest;
 import com.example.rentingservice.controller.response.OrderCreateResponse;
 import com.example.rentingservice.controller.response.Response;
 import com.example.rentingservice.exceptions.BusinessException;
+import com.example.rentingservice.exceptions.ServiceConnectRefusedException;
+import com.example.rentingservice.exceptions.ServiceErrorException;
 import com.example.rentingservice.service.OrderService;
 import com.example.rentingservice.service.dto.OrderCreate;
 import com.example.rentingservice.service.dto.OrderCreated;
@@ -42,5 +44,11 @@ public class OrderController {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Response<Object> handlerBusinessException(BusinessException businessException) {
         return new Response<>(businessException.getCode(), businessException.getMsg(), null);
+    }
+
+    @ExceptionHandler({ServiceConnectRefusedException.class})
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Response<Object> handlerInternalServerException(Exception e) {
+        return new Response<>(5000, "unknown error", null);
     }
 }

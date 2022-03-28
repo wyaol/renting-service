@@ -2,6 +2,8 @@ package com.example.rentingservice.controller;
 
 import com.example.rentingservice.controller.request.OrderCreateRequest;
 import com.example.rentingservice.exceptions.RentSeekingAlreadyConfirmedException;
+import com.example.rentingservice.exceptions.ServiceConnectRefusedException;
+import com.example.rentingservice.exceptions.ServiceErrorException;
 import com.example.rentingservice.service.OrderService;
 import com.example.rentingservice.service.dto.OrderCreated;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -80,5 +82,24 @@ class OrderControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(4001))
                 .andExpect(jsonPath("$.msg").value("already confirmed"));
+    }
+
+    @Test
+    void shouldCreateOrderFailedWhenClientNotInvalid() throws Exception {
+        when(orderService.createOrder(any())).thenThrow(new ServiceConnectRefusedException());
+
+        mockMvc.perform(post("/renting-orders")
+                .header("clientId", 789)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                        objectMapper.writeValueAsString(
+                                OrderCreateRequest.builder()
+                                        .agentId(123)
+                                        .mouthPrice(BigDecimal.valueOf(3000))
+                                        .rentalDelegationId(456)
+                                        .build()
+                        )
+                ))
+                .andExpect(status().isInternalServerError());
     }
 }
