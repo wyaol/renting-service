@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/letting-orders/789/rent-seeking/confirmation",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "rent_id": 456,
+          "request_id": 123
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "code": 0,
+      "msg": "",
+      "data": null
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

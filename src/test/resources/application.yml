@@ -7,3 +7,7 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
+
+services:
+  rental-delegation:
+    url: http://127.0.0.1:8001
