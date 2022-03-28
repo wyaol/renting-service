@@ -7,10 +7,9 @@ import com.example.rentingservice.repository.OrderRepository;
 import com.example.rentingservice.repository.entity.OrderEntity;
 import com.example.rentingservice.service.dto.OrderCreate;
 import com.example.rentingservice.service.dto.OrderCreated;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,9 +27,14 @@ public class OrderService {
                 .rentalDelegationId(rentalDelegationId)
                 .build());
         final Integer id = orderEntity.getId();
-        rentalDelegationClient.confirmRentSeeking(rentalDelegationId, RentSeekingRequest.builder()
-                .rentId(id)
-                .build());
+        try {
+            rentalDelegationClient.confirmRentSeeking(rentalDelegationId, RentSeekingRequest.builder()
+                    .rentId(id)
+                    .build());
+        } catch (FeignException.GatewayTimeout e) {
+            rentalDelegationClient.getRentSeeking(rentalDelegationId);
+        }
+
         return OrderCreated.builder().id(id).build();
     }
 }
