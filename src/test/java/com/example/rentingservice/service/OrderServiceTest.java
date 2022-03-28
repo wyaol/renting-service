@@ -76,4 +76,28 @@ class OrderServiceTest {
 
         assertEquals(234, orderCreated.getId());
     }
+
+    @Test
+    void shouldCreateOrderSuccessWhenConfirmRentSeekingTwice() {
+        when(orderRepository.save(any())).thenReturn(
+                OrderEntity.builder().id(234) .build()
+        );
+        when(rentalDelegationClient.confirmRentSeeking(any(), any()))
+                .thenThrow(new FeignException.GatewayTimeout(
+                        "",
+                        Request.create(
+                                Request.HttpMethod.POST, "", Map.of(), new byte[]{}, Charset.defaultCharset()), new byte[]{}, Map.of()
+                ))
+                .thenReturn(new ClientResponse<>(0, "", null));
+        when(rentalDelegationClient.getRentSeeking(any())).thenThrow(new FeignException.NotFound(
+                "",
+                Request.create(
+                        Request.HttpMethod.POST, "", Map.of(), new byte[]{}, Charset.defaultCharset()), new byte[]{}, Map.of()
+        ));
+
+        final OrderCreated orderCreated = orderService.createOrder(
+                new OrderCreate(123, BigDecimal.valueOf(3000), 456, 789));
+
+        assertEquals(234, orderCreated.getId());
+    }
 }
