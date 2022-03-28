@@ -38,24 +38,45 @@ public class OrderService {
                 .rentalDelegationId(rentalDelegationId)
                 .build());
         final Integer id = orderEntity.getId();
-        try {
-            retryMethod(
-                    this::confirmRentSeeking,
-                    Map.of("rentalDelegationId", rentalDelegationId, "id", id),
-                    FeignException.GatewayTimeout.class,
-                    6
-            );
-        } catch (FeignException.GatewayTimeout e) {
-            extractClientResponse(rentalDelegationClient.getRentSeeking(rentalDelegationId));
-        }
+
+        retryMethod(
+                this::confirmRentSeeking,
+                Map.of("rentalDelegationId", rentalDelegationId, "id", id),
+                FeignException.GatewayTimeout.class,
+                6
+        );
 
         return OrderCreated.builder().id(id).build();
     }
 
     private Object confirmRentSeeking(Map<String, Integer> map) {
-        return extractClientResponse(rentalDelegationClient.confirmRentSeeking(map.get("rentalDelegationId"), RentSeekingRequest.builder()
-                .rentId(map.get("id"))
-                .build()));
+        return confirmRentSeeking(map, 0);
+    }
+
+    private Object confirmRentSeeking(Map<String, Integer> map, int retryTimes) {
+        final Integer rentalDelegationId = map.get("rentalDelegationId");
+        try {
+            return extractClientResponse(rentalDelegationClient.confirmRentSeeking(rentalDelegationId, RentSeekingRequest.builder()
+                    .rentId(map.get("id"))
+                    .build()));
+        } catch (FeignException.GatewayTimeout e) {
+            try {
+                return retryMethod(
+                        this::verifyConfirmRentSeeking,
+                        rentalDelegationId,
+                        FeignException.GatewayTimeout.class,
+                        6
+                );
+            } catch (FeignException.NotFound e2) {
+                if (retryTimes == 6) throw new ServiceConnectRefusedException();
+                return confirmRentSeeking(map, retryTimes + 1);
+            }
+        }
+    }
+
+    private Object verifyConfirmRentSeeking(Integer rentalDelegationId) {
+        extractClientResponse(rentalDelegationClient.getRentSeeking(rentalDelegationId));
+        return new Object();
     }
 
     private <T, R, E> R retryMethod(Function<T, R> function, T t, Class<E> exception, int maxRetryTime) {

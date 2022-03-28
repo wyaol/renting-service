@@ -4,6 +4,8 @@ import com.example.rentingservice.client.RentalDelegationClient;
 import com.example.rentingservice.client.response.ClientResponse;
 import com.example.rentingservice.client.response.RentSeekingResponse;
 import com.example.rentingservice.exceptions.RentSeekingAlreadyConfirmedException;
+import com.example.rentingservice.exceptions.ServiceConnectRefusedException;
+import com.example.rentingservice.exceptions.ServiceErrorException;
 import com.example.rentingservice.repository.OrderRepository;
 import com.example.rentingservice.repository.entity.OrderEntity;
 import com.example.rentingservice.service.dto.OrderCreate;
@@ -112,5 +114,55 @@ class OrderServiceTest {
 
         assertThrows(RentSeekingAlreadyConfirmedException.class, () -> orderService.createOrder(
                 new OrderCreate(123, BigDecimal.valueOf(3000), 456, 789)));
+    }
+
+    @Test
+    void shouldThrowServiceErrorExceptionWhenGetRentSeekingFailedSixTimes() {
+        final FeignException.GatewayTimeout gatewayTimeout = new FeignException.GatewayTimeout(
+                "",
+                Request.create(
+                        Request.HttpMethod.POST, "", Map.of(), new byte[]{}, Charset.defaultCharset()), new byte[]{}, Map.of()
+        );
+        when(orderRepository.save(any())).thenReturn(
+                OrderEntity.builder().id(234) .build()
+        );
+        when(rentalDelegationClient.confirmRentSeeking(any(), any()))
+                .thenThrow(gatewayTimeout);
+        when(rentalDelegationClient.getRentSeeking(any()))
+                .thenThrow(gatewayTimeout)
+                .thenThrow(gatewayTimeout)
+                .thenThrow(gatewayTimeout)
+                .thenThrow(gatewayTimeout)
+                .thenThrow(gatewayTimeout)
+                .thenThrow(gatewayTimeout);
+
+        assertThrows(ServiceConnectRefusedException.class, () -> orderService.createOrder(
+                new OrderCreate(123, BigDecimal.valueOf(3000), 456, 789)));
+    }
+
+    @Test
+    void shouldCreateOrderSuccessWhenGetRentSeekingFailedAtSixTimes() {
+        final FeignException.GatewayTimeout gatewayTimeout = new FeignException.GatewayTimeout(
+                "",
+                Request.create(
+                        Request.HttpMethod.POST, "", Map.of(), new byte[]{}, Charset.defaultCharset()), new byte[]{}, Map.of()
+        );
+        when(orderRepository.save(any())).thenReturn(
+                OrderEntity.builder().id(234) .build()
+        );
+        when(rentalDelegationClient.confirmRentSeeking(any(), any()))
+                .thenThrow(gatewayTimeout);
+        when(rentalDelegationClient.getRentSeeking(any()))
+                .thenThrow(gatewayTimeout)
+                .thenThrow(gatewayTimeout)
+                .thenThrow(gatewayTimeout)
+                .thenThrow(gatewayTimeout)
+                .thenThrow(gatewayTimeout)
+                .thenReturn(new ClientResponse<>(0, "", RentSeekingResponse.builder().rentId(234).build()));
+
+        final OrderCreated orderCreated = orderService.createOrder(
+                new OrderCreate(123, BigDecimal.valueOf(3000), 456, 789));
+
+        assertEquals(234, orderCreated.getId());
     }
 }
