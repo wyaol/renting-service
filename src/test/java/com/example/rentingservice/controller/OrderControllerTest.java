@@ -1,6 +1,7 @@
 package com.example.rentingservice.controller;
 
 import com.example.rentingservice.controller.request.OrderCreateRequest;
+import com.example.rentingservice.exceptions.RentSeekingAlreadyConfirmedException;
 import com.example.rentingservice.service.OrderService;
 import com.example.rentingservice.service.dto.OrderCreated;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,5 +59,26 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.msg").value(""))
                 .andExpect(jsonPath("$.data.id").value(7865));
+    }
+
+    @Test
+    void shouldCreateOrderFailedWhenRentSeekingAlreadyConfirmed() throws Exception {
+        when(orderService.createOrder(any())).thenThrow(new RentSeekingAlreadyConfirmedException("already confirmed"));
+
+        mockMvc.perform(post("/renting-orders")
+                .header("clientId", 789)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                        objectMapper.writeValueAsString(
+                                OrderCreateRequest.builder()
+                                        .agentId(123)
+                                        .mouthPrice(BigDecimal.valueOf(3000))
+                                        .rentalDelegationId(456)
+                                        .build()
+                        )
+                ))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(4001))
+                .andExpect(jsonPath("$.msg").value("already confirmed"));
     }
 }

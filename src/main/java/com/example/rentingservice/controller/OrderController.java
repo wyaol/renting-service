@@ -4,12 +4,14 @@ package com.example.rentingservice.controller;
 import com.example.rentingservice.controller.request.OrderCreateRequest;
 import com.example.rentingservice.controller.response.OrderCreateResponse;
 import com.example.rentingservice.controller.response.Response;
+import com.example.rentingservice.exceptions.BusinessException;
 import com.example.rentingservice.service.OrderService;
 import com.example.rentingservice.service.dto.OrderCreate;
 import com.example.rentingservice.service.dto.OrderCreated;
 import com.example.rentingservice.util.ObjectMapperUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -34,5 +36,11 @@ public class OrderController {
         orderCreate.setClientId(clientId);
         final OrderCreated orderCreated = orderService.createOrder(orderCreate);
         return Response.success(ObjectMapperUtil.convert(orderCreated, OrderCreateResponse.class));
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response<Object> handlerBusinessException(BusinessException businessException) {
+        return new Response<>(businessException.getCode(), businessException.getMsg(), null);
     }
 }
