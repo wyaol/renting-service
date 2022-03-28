@@ -3,6 +3,7 @@ package com.example.rentingservice.service;
 import com.example.rentingservice.client.RentalDelegationClient;
 import com.example.rentingservice.client.response.ClientResponse;
 import com.example.rentingservice.client.response.RentSeekingResponse;
+import com.example.rentingservice.exceptions.RentSeekingAlreadyConfirmedException;
 import com.example.rentingservice.repository.OrderRepository;
 import com.example.rentingservice.repository.entity.OrderEntity;
 import com.example.rentingservice.service.dto.OrderCreate;
@@ -99,5 +100,17 @@ class OrderServiceTest {
                 new OrderCreate(123, BigDecimal.valueOf(3000), 456, 789));
 
         assertEquals(234, orderCreated.getId());
+    }
+
+    @Test
+    void shouldThrowRentSeekingAlreadyConfirmedExceptionWhenConfirmRentSeekingCodeIs4001() {
+        when(orderRepository.save(any())).thenReturn(
+                OrderEntity.builder().id(234) .build()
+        );
+        when(rentalDelegationClient.confirmRentSeeking(any(), any()))
+                .thenReturn(new ClientResponse<>(4001, "already confirmed", null));
+
+        assertThrows(RentSeekingAlreadyConfirmedException.class, () -> orderService.createOrder(
+                new OrderCreate(123, BigDecimal.valueOf(3000), 456, 789)));
     }
 }

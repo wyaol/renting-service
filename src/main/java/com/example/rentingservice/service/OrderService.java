@@ -4,7 +4,9 @@ package com.example.rentingservice.service;
 import com.example.rentingservice.client.RentalDelegationClient;
 import com.example.rentingservice.client.request.RentSeekingRequest;
 import com.example.rentingservice.client.response.ClientResponse;
+import com.example.rentingservice.exceptions.RentSeekingAlreadyConfirmedException;
 import com.example.rentingservice.exceptions.ServiceConnectRefusedException;
+import com.example.rentingservice.exceptions.ServiceErrorException;
 import com.example.rentingservice.repository.OrderRepository;
 import com.example.rentingservice.repository.entity.OrderEntity;
 import com.example.rentingservice.service.dto.OrderCreate;
@@ -23,6 +25,10 @@ public class OrderService {
 
     private OrderRepository orderRepository;
 
+    private static final Map<Integer, RuntimeException> CLIENT_CODE_TO_EXCEPTION = Map.of(
+            4001, new RentSeekingAlreadyConfirmedException("already confirmed")
+    );
+
     public OrderCreated createOrder(OrderCreate orderCreate) {
         final Integer rentalDelegationId = orderCreate.getRentalDelegationId();
         final OrderEntity orderEntity = orderRepository.save(OrderEntity.builder()
@@ -40,20 +46,20 @@ public class OrderService {
                     6
             );
         } catch (FeignException.GatewayTimeout e) {
-            rentalDelegationClient.getRentSeeking(rentalDelegationId);
+            extractClientResponse(rentalDelegationClient.getRentSeeking(rentalDelegationId));
         }
 
         return OrderCreated.builder().id(id).build();
     }
 
-    private ClientResponse<Object> confirmRentSeeking(Map<String, Integer> map) {
-        return rentalDelegationClient.confirmRentSeeking(map.get("rentalDelegationId"), RentSeekingRequest.builder()
+    private Object confirmRentSeeking(Map<String, Integer> map) {
+        return extractClientResponse(rentalDelegationClient.confirmRentSeeking(map.get("rentalDelegationId"), RentSeekingRequest.builder()
                 .rentId(map.get("id"))
-                .build());
+                .build()));
     }
 
     private <T, R, E> R retryMethod(Function<T, R> function, T t, Class<E> exception, int maxRetryTime) {
-        return _retryMethod(function, t,  0, maxRetryTime, exception);
+        return _retryMethod(function, t, 0, maxRetryTime, exception);
     }
 
     private <T, R, E> R _retryMethod(Function<T, R> function, T t, int retryTime, int maxRetryTime, Class<E> exception) {
@@ -67,5 +73,14 @@ public class OrderService {
                 throw e;
             }
         }
+    }
+
+    private <T> T extractClientResponse(ClientResponse<T> clientResponse) {
+        final Integer code = clientResponse.getCode();
+        if (code != 0) {
+            if (CLIENT_CODE_TO_EXCEPTION.containsKey(code)) throw CLIENT_CODE_TO_EXCEPTION.get(code);
+            throw new ServiceErrorException();
+        }
+        return clientResponse.getData();
     }
 }
