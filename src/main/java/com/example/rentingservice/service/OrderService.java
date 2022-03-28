@@ -30,7 +30,6 @@ public class OrderService {
         final Integer id = orderEntity.getId();
         rentalDelegationClient.confirmRentSeeking(rentalDelegationId, RentSeekingRequest.builder()
                 .rentId(id)
-                .requestId(UUID.randomUUID().toString())
                 .build());
         return OrderCreated.builder().id(id).build();
     }

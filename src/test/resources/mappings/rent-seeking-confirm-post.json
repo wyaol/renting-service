@@ -5,8 +5,7 @@
     "bodyPatterns": [
       {
         "equalToJson": {
-          "rent_id": 456,
-          "request_id": "123"
+          "rent_id": 456
         }
       }
     ]

@@ -2,6 +2,7 @@ package com.example.rentingservice.client;
 
 import com.example.rentingservice.client.request.RentSeekingRequest;
 import com.example.rentingservice.client.response.ClientResponse;
+import com.example.rentingservice.client.response.RentSeekingResponse;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.http.trafficlistener.ConsoleNotifyingWiremockNetworkTrafficListener;
@@ -42,7 +43,14 @@ class RentalDelegationClientTest {
         ClientResponse<Object> response = rentalDelegationClient
                 .confirmRentSeeking(
                         789,
-                        RentSeekingRequest.builder().requestId("123").rentId(456) .build());
+                        RentSeekingRequest.builder().rentId(456) .build());
         assertEquals(0, response.getCode());
+    }
+
+    @Test
+    void shouldGetRentSeekingSuccess() {
+        ClientResponse<RentSeekingResponse> response = rentalDelegationClient
+                .getRentSeeking(789);
+        assertEquals(123, response.getData().getRentId());
     }
 }

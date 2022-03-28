@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/letting-orders/789/rent-seeking"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "code": 0,
+      "msg": "",
+      "data": {
+        "rent_id": 123
+      }
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

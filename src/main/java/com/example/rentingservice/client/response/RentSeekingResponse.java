@@ -1,4 +1,4 @@
-package com.example.rentingservice.client.request;
+package com.example.rentingservice.client.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @Data
-public class RentSeekingRequest {
+public class RentSeekingResponse {
     @JsonProperty("rent_id")
     private Integer rentId;
 }
