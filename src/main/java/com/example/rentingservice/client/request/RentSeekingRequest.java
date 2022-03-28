@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 public class RentSeekingRequest {
     @JsonProperty("request_id")
-    private Integer requestId;
+    private String requestId;
     @JsonProperty("rent_id")
     private Integer rentId;
 }

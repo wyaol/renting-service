@@ -6,7 +6,7 @@
       {
         "equalToJson": {
           "rent_id": 456,
-          "request_id": 123
+          "request_id": "123"
         }
       }
     ]

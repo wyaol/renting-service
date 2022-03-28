@@ -42,7 +42,7 @@ class RentalDelegationClientTest {
         ClientResponse<Object> response = rentalDelegationClient
                 .confirmRentSeeking(
                         789,
-                        RentSeekingRequest.builder().requestId(123).rentId(456) .build());
+                        RentSeekingRequest.builder().requestId("123").rentId(456) .build());
         assertEquals(0, response.getCode());
     }
 }
